@@ -8,3 +8,4 @@ PositionEncodingType = Literal['absolute', 'relative',
 ActivationType = Literal['gelu', 'relu', 'swish', 'tanh', 'sigmoid']
 TaskType = Literal['masked_recovery', 'next_value',
                    'classification', 'regression']
+DeviceType = Literal['cpu', 'cuda', 'mps']
