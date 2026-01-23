@@ -88,34 +88,34 @@ class NumericalFeatureEncoder(BaseFeatureEncoder):
 class CategoricalFeatureEncoder(BaseFeatureEncoder):
     def __init__(
         self,
-        embedding_dim: int,
-        feature_metadata: FeatureMetadata,  # ← ИСПРАВЛЕНО
+        embedding_dim: int,  # hidden
+        feature_metadata: FeatureMetadata,
         max_cardinality: int = 10000,
         oov_strategy: str = 'hashing',
-        embedding_dim_ratio: float = 0.5
     ):
         super().__init__(embedding_dim, feature_metadata)
         self.max_cardinality = max_cardinality
         self.oov_strategy = oov_strategy
+        self.cat_embedding_dim = embedding_dim
 
-        effective_cardinality = min(max_cardinality, feature_metadata.cardinality or 100)
-        calculated_dim = int(min(embedding_dim, np.sqrt(effective_cardinality)))
-        self.cat_embedding_dim = max(1, calculated_dim)
-
-        actual_cardinality = min(max_cardinality, effective_cardinality)
-        self.embedding_table = nn.Embedding(actual_cardinality, self.cat_embedding_dim)
+        actual_cardinality = min(max_cardinality,
+                                 feature_metadata.cardinality or 100)
+        self.embedding_table = nn.Embedding(actual_cardinality,
+                                            self.cat_embedding_dim)
 
         if oov_strategy == 'token':
             self.oov_embedding = nn.Parameter(torch.randn(self.cat_embedding_dim))
         else:
             self.oov_embedding = None
 
-        self.projection_layer = nn.Linear(self.cat_embedding_dim, embedding_dim)
+        # self.projection_layer = nn.Linear(self.cat_embedding_dim, embedding_dim)
+        # self.projection_layer = nn.Identity()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         oov_mask = x >= self.embedding_table.num_embeddings
         x_safe = torch.where(oov_mask, torch.zeros_like(x), x)
         embedded_cat = self.embedding_table(x_safe)
+        # (..., cat_dim) = (..., dim)
 
         if self.oov_strategy == 'token' and self.oov_embedding is not None:
             embedded_cat = torch.where(
@@ -124,11 +124,12 @@ class CategoricalFeatureEncoder(BaseFeatureEncoder):
                 embedded_cat
             )
 
-        embedded_out = self.projection_layer(embedded_cat)
-        return embedded_out
+        # embedded_out = self.projection_layer(embedded_cat)
+        return embedded_cat
 
     def get_output_dim(self) -> int:
         return self.embedding_dim
+    # cat_embedding_dim == embedding_dim
 
 
 class DateTimeFeatureEncoder(BaseFeatureEncoder):
@@ -139,9 +140,12 @@ class DateTimeFeatureEncoder(BaseFeatureEncoder):
     ):
         super().__init__(embedding_dim, feature_metadata)
         self.num_cyclical_features = 4
-        self.projection_layer = nn.Linear(self.num_cyclical_features, embedding_dim)
+        self.projection_layer = nn.Linear(self.num_cyclical_features,
+                                          embedding_dim)
 
-    def _get_time_features(self, timestamps: torch.Tensor) -> Dict[str, torch.Tensor]:
+    def _get_time_features(self,
+                           timestamps: torch.Tensor) -> Dict[str,
+                                                             torch.Tensor]:
         hours = timestamps % 24
         days_of_week = (timestamps / 24) % 7
         return {
@@ -212,7 +216,8 @@ class TextFeatureEncoder(BaseFeatureEncoder):
         elif self.pooling_strategy == 'last':
             embedded_text = last_hidden_states[:, -1, :]
         else:
-            raise ValueError(f"Unknown pooling strategy: {self.pooling_strategy}")
+            raise ValueError(
+                f"Unknown pooling strategy: {self.pooling_strategy}")
 
         embedded_out = self.projection_layer(embedded_text)
         return embedded_out
