@@ -4,6 +4,9 @@ import torch.nn as nn
 from .features_encoders import ENCODER_REGISTRY, FeatureMetadata
 import os
 
+# TODO: пофиксить варнинг с размерностями тензора таргета
+# self.hidden_dim.reshape[n, ] (??????)
+
 
 class OmniSeqBERT(nn.Module):
     """
