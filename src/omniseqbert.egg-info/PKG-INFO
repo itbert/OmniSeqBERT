@@ -1,0 +1,6 @@
+Metadata-Version: 2.4
+Name: omniseqbert
+Version: 1.0.0
+Summary: BERT implementation for sequential recommendation on universal datasets
+License-File: LICENSE
+Dynamic: license-file
