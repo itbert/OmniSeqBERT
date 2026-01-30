@@ -1,0 +1,11 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "omniseqbert"
+version = "1.0.0"
+description = "BERT implementation for sequential recommendation on universal datasets"
+
+[tool.setuptools.packages.find]
+where = ["src"]
